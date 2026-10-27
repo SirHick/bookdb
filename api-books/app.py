@@ -25,6 +25,23 @@ migrate = Migrate(app, db)
 def hello():
     return "API está funcionando!"
 
+
+
+@app.route("/books", methods=["GET"])
+def listar_livros():
+    livros = Book.query.all()
+
+    return jsonify([
+        livro.as_dict()
+        for livro in livros
+    ])
+
+@app.route("/books/<uuid:book_id>", methods=["GET"])
+def get_book(book_id):
+    book = Book.query.get_or_404(book_id)
+
+    return jsonify(book.as_dict())
+
 @app.route("/books", methods=["POST"])
 def add_book():
     data = request.get_json()
@@ -41,6 +58,33 @@ def add_book():
     return jsonify({
         "message": "Livro inserido com sucesso"
     }), 201
+
+@app.route("/books/<uuid:book_id>", methods=["PATCH"])
+def update_book(book_id):
+    book = Book.query.get_or_404(book_id)
+
+    data = request.get_json()
+
+    for key, value in data.items():
+        setattr(book, key, value)
+
+    db.session.commit()
+
+    return jsonify({
+        "message": "Livro atualizado com sucesso"
+    })
+
+
+@app.route("/books/<uuid:book_id>", methods=["DELETE"])
+def delete_book(book_id):
+    book = Book.query.get_or_404(book_id)
+
+    db.session.delete(book)
+    db.session.commit()
+
+    return jsonify({
+        "message": "Livro removido com sucesso"
+    })
 
 if __name__ == "__main__":
     app.run(
